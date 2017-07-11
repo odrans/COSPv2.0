@@ -295,8 +295,8 @@ MODULE MOD_COSP_CONFIG
        S_att       = 0.01,    & !
        S_cld_att   = 30.        ! Threshold for undefined cloud phase detection
     real(wp),parameter,dimension(SR_BINS+1) :: &
-         calipso_histBsct = (/0.01,1.2,3.0,5.0,7.0,10.0,15.0,20.0,25.0,30.0,40.0,50.0,   &
-                              60.0,80.0,999.,1009./)         ! Backscatter histogram bins
+         calipso_histBsct = (/-1.,0.01,1.2,3.0,5.0,7.0,10.0,15.0,20.0,25.0,30.0,40.0,50.0,   &
+                              60.0,80.0,999./)         ! Backscatter histogram bins
     real(wp),parameter,dimension(2,SR_BINS) :: &
          calipso_binEdges = reshape(source=(/calipso_histBsct(1),((calipso_histBsct(k),  &
                                     l=1,2),k=2,SR_BINS),calipso_histBsct(SR_BINS+1)/),   &

@@ -128,10 +128,8 @@ MODULE MOD_COSP
      real(wp),allocatable,dimension(:,:,:) :: &
           frac_out,            & ! Cloud fraction
           tau_067,             & ! Optical depth
-          tau_067_snow,        & ! Optical depth (with snow)
           fracLiq,             & ! Cloud fraction
           emiss_11,            & ! Emissivity
-          emiss_11_snow,       & ! Emissivity (with snow)
           asym,                & ! Assymetry parameter
           ss_alb,              & ! Single-scattering albedo
           betatot,             & ! Backscatter coefficient for polarized optics (total)
@@ -495,12 +493,12 @@ CONTAINS
     !     Enforce bounds on input fields. If input field is out-of-bounds, report error 
     !     and turn off simulator
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    call cosp_errorCheck(cospgridIN,cospIN,Lisccp_subcolumn,Lisccp_column,               &
-                         Lmisr_subcolumn,Lmisr_column,Lmodis_subcolumn,Lmodis_column,    &
-                         Lcloudsat_subcolumn,Lcloudsat_column,Lcalipso_subcolumn,        &
-                         Lcalipso_column,Lrttov_subcolumn,Lrttov_column,                 &
-                         Lparasol_subcolumn,Lparasol_column,Lradar_lidar_tcc,            &
-                         Llidar_only_freq_cloud,cospOUT,cosp_simulator,nError)
+    !call cosp_errorCheck(cospgridIN,cospIN,Lisccp_subcolumn,Lisccp_column,               &
+    !                     Lmisr_subcolumn,Lmisr_column,Lmodis_subcolumn,Lmodis_column,    &
+    !                     Lcloudsat_subcolumn,Lcloudsat_column,Lcalipso_subcolumn,        &
+    !                     Lcalipso_column,Lrttov_subcolumn,Lrttov_column,                 &
+    !                     Lparasol_subcolumn,Lparasol_column,Lradar_lidar_tcc,            &
+    !                     Llidar_only_freq_cloud,cospOUT,cosp_simulator,nError)
     call cpu_time(cosp_time(3))
     if (debug_cosp) print*,'   Time for cosp_errorCheck:                             ',cosp_time(3)-cosp_time(2)
 
@@ -516,8 +514,8 @@ CONTAINS
        isccpIN%qv       => cospgridIN%qv
        isccpIN%at       => cospgridIN%at
        isccpIN%frac_out => cospIN%frac_out
-       isccpIN%dtau     => cospIN%tau_067_snow
-       isccpIN%dem      => cospIN%emiss_11_snow
+       isccpIN%dtau     => cospIN%tau_067
+       isccpIN%dem      => cospIN%emiss_11
        isccpIN%phalf    => cospgridIN%phalf
        isccpIN%sunlit   => cospgridIN%sunlit
        isccpIN%pfull    => cospgridIN%pfull
@@ -527,7 +525,7 @@ CONTAINS
        misrIN%Npoints  => Npoints
        misrIN%Ncolumns => cospIN%Ncolumns
        misrIN%Nlevels  => cospIN%Nlevels
-       misrIN%dtau     => cospIN%tau_067_snow
+       misrIN%dtau     => cospIN%tau_067
        misrIN%sunlit   => cospgridIN%sunlit
        misrIN%zfull    => cospgridIN%hgt_matrix
        misrIN%at       => cospgridIN%at
@@ -729,7 +727,7 @@ CONTAINS
                                    cloudsatIN%hgt_matrix/1000._wp,                       &
                                    cloudsatIN%z_vol(:,icol,:),                           &
                                    cloudsatIN%kr_vol(:,icol,:),                          &
-                                   cloudsatIN%g_vol(:,1,:),cloudsatDBze(:,icol,:))
+                                   cloudsatIN%g_vol(:,icol,:),cloudsatDBze(:,icol,:))
        enddo
        ! Store output (if requested)
        if (associated(cospOUT%cloudsat_Ze_tot)) then
@@ -1406,13 +1404,11 @@ CONTAINS
     y%Npoints  = Npoints
     y%Ncolumns = Ncolumns
     y%Nlevels  = Nlevels
-    y%Npart    = 4
+    y%Npart    = 5
     y%Nrefl    = PARASOL_NREFL
     
     allocate(y%tau_067(npoints,        ncolumns,nlevels),                                &
              y%emiss_11(npoints,       ncolumns,nlevels),                                &
-             y%tau_067_snow(npoints,   ncolumns,nlevels),                                &
-             y%emiss_11_snow(npoints,  ncolumns,nlevels),                                &
              y%frac_out(npoints,       ncolumns,nlevels),                                &
              y%betatot(npoints,        ncolumns,nlevels),                                &
              y%betatot_ice(npoints,    ncolumns,nlevels),                                &
@@ -1675,8 +1671,6 @@ CONTAINS
   subroutine destroy_cospIN(y)
     type(cosp_optical_inputs),intent(inout) :: y
 
-    if (allocated(y%emiss_11_snow))   deallocate(y%emiss_11_snow)
-    if (allocated(y%tau_067_snow))    deallocate(y%tau_067_snow)
     if (allocated(y%fracLiq))         deallocate(y%fracLiq)
     if (allocated(y%ss_alb))          deallocate(y%ss_alb)
     if (allocated(y%asym))            deallocate(y%asym)
