@@ -69,7 +69,7 @@
   Lmeantbisccp=.true.,
   Lmeantbclrisccp=.true.,
   !- MISR
-  LclMISR=.true.,
+  LclMISR=.false.,
   !- Use lidar and radar
   Lclcalipso2=.true.,
   Lcltlidarradar=.true.,

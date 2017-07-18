@@ -790,6 +790,10 @@ contains
        mr_hydro(:,1,:,I_LSCICE) = mr_lsice
        mr_hydro(:,1,:,I_CVCLIQ) = mr_ccliq
        mr_hydro(:,1,:,I_CVCICE) = mr_ccice
+       ! Adding extra hydrometeors
+       mr_hydro(:,1,:,I_LSRAIN) = fl_lsrainIN
+       mr_hydro(:,1,:,I_LSSNOW) = fl_lssnowIN
+       mr_hydro(:,1,:,I_LSGRPL) = fl_lsgrplIN
        Reff(:,1,:,:)            = ReffIN
     endif
     
