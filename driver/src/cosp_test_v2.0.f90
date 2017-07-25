@@ -437,8 +437,8 @@ program cosp_test_v2
      cospstateIN%hgt_matrix_half(:,Nlevels+1) = 0._wp
      
      ! RTTOV inputs (by default, COSP is distributed not using RTTOV, but the infrastructure is there.)
-     !cospstateIN%u_sfc                = u_wind(start_idx:end_idx)            ! m/s
-     !cospstateIN%v_sfc                = v_wind(start_idx:end_idx)            ! m/s
+     cospstateIN%u_sfc                = u_wind(start_idx:end_idx)            ! m/s
+     cospstateIN%v_sfc                = v_wind(start_idx:end_idx)            ! m/s
      !cospstateIN%emis_sfc             = rttov_surfem
      !cospstateIN%zenang               = rttov_zenang
      !cospstateIN%lat                  = lat(start_idx:end_idx)

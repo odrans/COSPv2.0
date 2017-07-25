@@ -48,11 +48,11 @@ HOOKS_PATH = $(cospdir)/hooks
 RNG_PATH = $(cospdir)/rng
 
 # RTTOV setup
-RTTOV_PATH       = $(HOME)/work/Tools/RTTOV/rttov113
+RTTOV_PATH       = $(HOME)/work/Tools/RTTOV/rttov121
 RTTOV_LIB_PATH   = $(RTTOV_PATH)/lib 
 RTTOV_INC_PATH   = $(RTTOV_PATH)/include 
 RTTOV_MOD_PATH   = $(RTTOV_PATH)/mod
-RTTOV_LIBS       =  -lrttov11_wrapper -lrttov11_other -lrttov11_emis_atlas -lrttov11_brdf_atlas -lrttov11_mw_scatt -lrttov11_mw_scatt_coef -lrttov11_parallel -lrttov11_coef_io -lrttov11_hdf -lrttov11_main
+RTTOV_LIBS       =  -lrttov12_wrapper -lrttov12_mw_scatt -lrttov12_brdf_atlas -lrttov12_emis_atlas -lrttov12_other -lrttov12_parallel -lrttov12_coef_io -lrttov12_hdf -lrttov12_main -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
 
 ## Other
 PROG     = cosp_test_v2.0

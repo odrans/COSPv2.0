@@ -33,9 +33,8 @@
 MODULE MOD_COSP_RTTOV_INTERFACE
   USE COSP_KINDS,       ONLY: wp
   USE MOD_COSP_CONFIG,  ONLY: RTTOV_MAX_CHANNELS,rttovDir
-  use mod_cosp_rttov,   only: platform,satellite,sensor,nChannels,iChannel,coef_rttov,   &
-                              coef_scatt,opts,opts_scatt,construct_rttov_coeffilename,   &
-                              construct_rttov_scatfilename
+  use mod_cosp_rttov,   only: platform,satellite,sensor,nChannels,iChannel,  &
+                              opts
   IMPLICIT NONE
 #include "rttov_read_coefs.interface"
 #include "rttov_read_scattcoeffs.interface"
@@ -102,33 +101,33 @@ CONTAINS
     character(len=256) :: coef_file,scat_file
     integer :: errorstatus
     
-    ! Initialize fields in module memory (cosp_rttovXX.F90)
-    nChannels  = NchanIN
-    platform   = platformIN 
-    satellite  = satelliteIN 
-    sensor     = instrumentIN 
-    iChannel   = channelsIN
+    ! ! Initialize fields in module memory (cosp_rttovXX.F90)
+    ! nChannels  = NchanIN
+    ! platform   = platformIN 
+    ! satellite  = satelliteIN 
+    ! sensor     = instrumentIN 
+    ! iChannel   = channelsIN
 
     ! Options common to RTTOV clear-sky Tb calculation
-    opts%interpolation%addinterp  = .true.  ! allow interpolation of input profile
-    opts%rt_all%use_q2m           = .true.
-    opts%config%do_checkinput     = .false.
-    opts%config%verbose           = .false.
-    opts%rt_all%addrefrac         = .true.  ! include refraction in path calc
-    opts%interpolation%reg_limit_extrap = .true.
+    ! opts%interpolation%addinterp  = .true.  ! allow interpolation of input profile
+    ! opts%rt_all%use_q2m           = .true.
+    ! opts%config%do_checkinput     = .false.
+    ! opts%config%verbose           = .false.
+    ! opts%rt_all%addrefrac         = .true.  ! include refraction in path calc
+    ! opts%interpolation%reg_limit_extrap = .true.
     ! Options common to RTTOV clear-sky Tb calculation
-    opts_scatt%config%do_checkinput    = .false.
-    opts_scatt%config%verbose          = .false.
-    opts_scatt%config%apply_reg_limits = .true.
-    opts_scatt%interp_mode             = 1
-    opts_scatt%reg_limit_extrap        = .true.
-    opts_scatt%use_q2m                 = .true.
-    opts%rt_mw%clw_data                = .true. 
+    ! opts_scatt%config%do_checkinput    = .false.
+    ! opts_scatt%config%verbose          = .false.
+    ! opts_scatt%config%apply_reg_limits = .true.
+    ! opts_scatt%interp_mode             = 1
+    ! opts_scatt%reg_limit_extrap        = .true.
+    ! opts_scatt%use_q2m                 = .true.
+    ! opts%rt_mw%clw_data                = .true. 
         
     ! Read in scattering coefficient file.
-    coef_file = trim(rttovDir)//"rtcoef_rttov11/rttov7pred54L/"// &
-         trim(construct_rttov_coeffilename(platform,satellite,sensor))
-    call rttov_read_coefs(errorstatus,coef_rttov, opts, file_coef=trim(coef_file))
+    ! coef_file = trim(rttovDir)//"rtcoef_rttov11/rttov7pred54L/"// &
+    !      trim(construct_rttov_coeffilename(platform,satellite,sensor))
+    ! call rttov_read_coefs(errorstatus,coef_rttov, opts, file_coef=trim(coef_file))
 
     ! Read in scattering (clouds+aerosol) coefficient file. *ONLY NEEDED IF DOING RTTOV ALL-SKY.*
     !scat_file = trim(rttovDir)//"rtcoef_rttov11/cldaer/"//&
