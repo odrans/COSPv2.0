@@ -88,7 +88,7 @@ LIST_OBJ_COSP = $(obj)/cosp_kinds.o \
 		$(obj)/quickbeam.o \
 		$(obj)/parasol.o \
 		$(obj)/icarus.o \
-		$(obj)/cosp_rttov11.o \
+		$(obj)/cosp_rttov12.o \
 		$(obj)/MISR_simulator.o \
 		$(obj)/modis_simulator.o \
 		$(obj)/lidar_simulator.o \
@@ -162,7 +162,7 @@ $(obj)/MISR_simulator.o : $(MISR_PATH)/MISR_simulator.F90
 $(obj)/modis_simulator.o : $(MODIS_PATH)/modis_simulator.F90 
 	$(F90) $(F90FLAGS) -c $< -o $@
 
-$(obj)/cosp_rttov11.o : $(RTTOVSIM_PATH)/cosp_rttov11.F90
+$(obj)/cosp_rttov12.o : $(RTTOVSIM_PATH)/cosp_rttov12.F90
 	$(F90) $(F90FLAGS) -I $(RTTOV_INC_PATH) -I $(RTTOV_MOD_PATH) -L $(RTTOV_LIB_PATH) -c $< -o $@
 
 $(obj)/lidar_simulator.o : $(CS_PATH)/lidar_simulator.F90

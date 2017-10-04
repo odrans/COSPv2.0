@@ -317,6 +317,7 @@ CONTAINS
     ! Initialize error reporting for output
     cosp_simulator(:)=''
 
+    
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ! 1) Determine if using full inputs or subset
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -479,7 +480,7 @@ CONTAINS
        Lradar_lidar_tcc    = .true.
        Llidar_only_freq_cloud = .true.
     endif
-    
+
     call cpu_time(cosp_time(2))
     if (debug) print*,'   Time to check outputs to see which simualtor to run:  ',cosp_time(2)-cosp_time(1)
     
@@ -495,8 +496,8 @@ CONTAINS
                          Lparasol_subcolumn,Lparasol_column,Lradar_lidar_tcc,            &
                          Llidar_only_freq_cloud,cospOUT,cosp_simulator,nError)
     call cpu_time(cosp_time(3))
-    if (debug) print*,'   Time for cosp_errorCheck:                             ',cosp_time(3)-cosp_time(2)
 
+    if(cospOUT%rttov_tbs(1,1).LT.0) stop
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ! 3) Populate instrument simulator inputs
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -579,7 +580,7 @@ CONTAINS
           modisIN%notSunlit = pack((/ (i, i = 1, Npoints ) /),mask = .not. cospgridIN%sunlit > 0)
        endif
     endif
-    
+
     if (Lrttov_column) then
        rttovIN%nPoints    => Npoints
        rttovIN%nLevels    => cospIN%nLevels
@@ -1209,7 +1210,7 @@ CONTAINS
     endif
     call cpu_time(cosp_time(15))
     if (debug) print*,'   Time to run modis_column:                             ',cosp_time(15)-cosp_time(14)
-    
+
     ! RTTOV
     if (lrttov_column) then
        call rttov_column(rttovIN%nPoints,rttovIN%nLevels,rttovIN%nSubCols,rttovIN%q,    &
@@ -1219,15 +1220,13 @@ CONTAINS
                          rttovIN%latitude,rttovIN%seaice,rttovIN%co2,rttovIN%ch4,       &
                          rttovIN%n2o,rttovIN%co,rttovIN%zenang,lrttov_cleanUp,          &
                          cospOUT%rttov_tbs(ij:ik,:),cosp_simulator(nError+1),           &
-                         ! Optional arguments for surface emissivity calculation
-                         month=rttovIN%month)
-                         ! Optional arguments to rttov for all-sky calculation
-                         ! rttovIN%month, rttovIN%tca,rttovIN%cldIce,rttovIN%cldLiq,     &
-                         ! rttovIN%fl_rain,rttovIN%fl_snow)
+                         rttovIN%surfem,rttovIN%month, rttovIN%tca, &
+                         rttovIN%cldIce,rttovIN%cldLiq, &
+                         rttovIN%fl_rain,rttovIN%fl_snow)
     endif
     call cpu_time(cosp_time(16))
     if (debug) print*,'   Time to run rttov_column:                             ',cosp_time(16)-cosp_time(15)
-    
+
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ! 6) Compute multi-instrument products
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

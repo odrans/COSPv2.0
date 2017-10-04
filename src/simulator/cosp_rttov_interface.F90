@@ -34,11 +34,51 @@ MODULE MOD_COSP_RTTOV_INTERFACE
   USE COSP_KINDS,       ONLY: wp
   USE MOD_COSP_CONFIG,  ONLY: RTTOV_MAX_CHANNELS,rttovDir
   use mod_cosp_rttov,   only: platform,satellite,sensor,nChannels,iChannel,  &
-                              opts
-  IMPLICIT NONE
-#include "rttov_read_coefs.interface"
-#include "rttov_read_scattcoeffs.interface"
+       opts, errorstatus_success, rttov_exit, coefs, &
+       emis_atlas, brdf_atlas, atlas_type, dosolar, nthreads
 
+  USE rttov_const, ONLY :     &
+         surftype_sea,        &
+         surftype_land,       &
+         sensor_id_mw,        &
+         sensor_id_po,        &
+         inst_name,           &
+         platform_name
+
+  ! The rttov_emis_atlas_data type must be imported separately
+  USE mod_rttov_emis_atlas, ONLY : &
+       rttov_emis_atlas_data, &
+       atlas_type_ir, atlas_type_mw
+  
+  ! The rttov_brdf_atlas_data type must be imported separately
+  USE mod_rttov_brdf_atlas, ONLY : rttov_brdf_atlas_data
+
+  
+  
+  IMPLICIT NONE
+
+#include "rttov_direct.interface"
+#include "rttov_parallel_direct.interface"
+#include "rttov_read_coefs.interface"
+#include "rttov_dealloc_coefs.interface"
+#include "rttov_alloc_direct.interface"
+#include "rttov_user_options_checkinput.interface"
+#include "rttov_print_opts.interface"
+#include "rttov_print_profile.interface"
+#include "rttov_skipcommentline.interface"
+
+! Use emissivity atlas
+#include "rttov_setup_emis_atlas.interface"
+#include "rttov_get_emis.interface"
+#include "rttov_deallocate_emis_atlas.interface"
+
+! Use BRDF atlas
+#include "rttov_setup_brdf_atlas.interface"
+#include "rttov_get_brdf.interface"
+#include "rttov_deallocate_brdf_atlas.interface"
+
+
+  
   ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ! TYPE rttov_in
   ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -83,6 +123,7 @@ MODULE MOD_COSP_RTTOV_INTERFACE
           fl_rain,      & ! Precipitation flux (startiform+convective rain) (kg/m2/s)
           fl_snow         ! Precipitation flux (stratiform+convective snow)
   end type rttov_in
+  
 CONTAINS
 
   !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -98,42 +139,116 @@ CONTAINS
          channelsIN     ! RTTOV channels
 
     ! Local variables
-    character(len=256) :: coef_file,scat_file
-    integer :: errorstatus
+    character(len=256) :: coef_filename, cld_coef_filename, sat
+    integer :: errorstatus, dosolar, imonth
+
+    imonth=1
+    dosolar = 0
+    nthreads = 1
+    nChannels  = NchanIN
+    iChannel=channelsIN    
+
+    sat="_"
+    IF(satelliteIN.NE.0) THEN
+       write(sat,*) satelliteIN
+       sat="_"//trim(adjustl(sat))//"_"
+    END IF
+    COEF_FILENAME= "/pf/b/b380333/work/Tools/RTTOV/rttov121/rtcoef_rttov12/rttov7pred54L/rtcoef_"//trim(platform_name(platformIN))//trim(sat)//trim(inst_name(instrumentIN))//".dat"
+    CLD_COEF_FILENAME= "/pf/b/b380333/work/Tools/RTTOV/rttov121/rtcoef_rttov12/cldaer_ir/sccldcoef_"//trim(platform_name(platformIN))//trim(sat)//trim(inst_name(instrumentIN))//".dat"    
+
     
-    ! ! Initialize fields in module memory (cosp_rttovXX.F90)
-    ! nChannels  = NchanIN
-    ! platform   = platformIN 
-    ! satellite  = satelliteIN 
-    ! sensor     = instrumentIN 
-    ! iChannel   = channelsIN
+    ! --------------------------------------------------------------------------
+    ! 1. Initialise RTTOV options structure
+    ! --------------------------------------------------------------------------
+    IF (dosolar == 1) THEN
+       opts % rt_ir % addsolar = .TRUE.           ! Include solar radiation
+    ELSE
+       opts % rt_ir % addsolar = .FALSE.          ! Do not include solar radiation
+    ENDIF
+    opts % interpolation % addinterp   = .TRUE.  ! Allow interpolation of input profile
+    opts % interpolation % interp_mode = 1       ! Set interpolation method
+!!    opts % interpolation % reg_limit_extrap = .TRUE.
 
-    ! Options common to RTTOV clear-sky Tb calculation
-    ! opts%interpolation%addinterp  = .true.  ! allow interpolation of input profile
-    ! opts%rt_all%use_q2m           = .true.
-    ! opts%config%do_checkinput     = .false.
-    ! opts%config%verbose           = .false.
-    ! opts%rt_all%addrefrac         = .true.  ! include refraction in path calc
-    ! opts%interpolation%reg_limit_extrap = .true.
-    ! Options common to RTTOV clear-sky Tb calculation
-    ! opts_scatt%config%do_checkinput    = .false.
-    ! opts_scatt%config%verbose          = .false.
-    ! opts_scatt%config%apply_reg_limits = .true.
-    ! opts_scatt%interp_mode             = 1
-    ! opts_scatt%reg_limit_extrap        = .true.
-    ! opts_scatt%use_q2m                 = .true.
-    ! opts%rt_mw%clw_data                = .true. 
-        
-    ! Read in scattering coefficient file.
-    ! coef_file = trim(rttovDir)//"rtcoef_rttov11/rttov7pred54L/"// &
-    !      trim(construct_rttov_coeffilename(platform,satellite,sensor))
-    ! call rttov_read_coefs(errorstatus,coef_rttov, opts, file_coef=trim(coef_file))
+    opts % rt_all % addrefrac          = .TRUE.  ! Include refraction in path calc
+    opts % rt_ir % addaerosl           = .FALSE. ! Don't include aerosol effects
+    opts % rt_ir % addclouds           = .TRUE.  ! Don't include cloud effects
 
-    ! Read in scattering (clouds+aerosol) coefficient file. *ONLY NEEDED IF DOING RTTOV ALL-SKY.*
-    !scat_file = trim(rttovDir)//"rtcoef_rttov11/cldaer/"//&
-    !     trim(construct_rttov_scatfilename(platform,satellite,sensor))
-    ! Can't pass filename to rttov_read_scattcoeffs!!!!!
-    !call rttov_read_scattcoeffs (errorstatus, coef_rttov%coef, coef_scatt,)
+    opts % rt_ir % ir_scatt_model      = 1 ! DOM
+    opts % rt_ir % vis_scatt_model     = 1 ! DOM
+    opts % rt_ir % dom_nstreams        = 8 
+
+    opts % rt_ir % ozone_data          = .FALSE. ! Set the relevant flag to .TRUE.
+    opts % rt_ir % co2_data            = .FALSE. !   when supplying a profile of the
+    opts % rt_ir % n2o_data            = .FALSE. !   given trace gas (ensure the
+    opts % rt_ir % ch4_data            = .FALSE. !   coef file supports the gas)
+    opts % rt_ir % co_data             = .FALSE. !
+    opts % rt_ir % so2_data            = .FALSE. !
+    opts % rt_mw % clw_data            = .FALSE. 
+
+    opts % config % verbose            = .FALSE.  ! Enable printing of warnings
+    opts % config % do_checkinput      = .FALSE.
+
+    ! --------------------------------------------------------------------------
+    ! 2. Read coefficients
+    ! --------------------------------------------------------------------------
+    CALL rttov_read_coefs(errorstatus, coefs, opts, file_coef=coef_filename, &
+         file_sccld=cld_coef_filename)
+    IF (errorstatus /= errorstatus_success) THEN
+       WRITE(*,*) 'fatal error reading coefficients'
+       CALL rttov_exit(errorstatus)
+    ENDIF
+
+    ! Ensure the options and coefficients are consistent
+    CALL rttov_user_options_checkinput(errorstatus, opts, coefs)
+    IF (errorstatus /= errorstatus_success) THEN
+       WRITE(*,*) 'error in rttov options'
+       CALL rttov_exit(errorstatus)
+    ENDIF
+
+
+    ! --------------------------------------------------------------------------
+    ! Initialize the emissivity and (if solar) the brdf atlases
+    ! --------------------------------------------------------------------------
+
+    IF (coefs%coef%id_sensor == sensor_id_mw .OR. &
+         coefs%coef%id_sensor == sensor_id_po) THEN
+       atlas_type = atlas_type_mw ! MW atlas
+    ELSE
+       atlas_type = atlas_type_ir ! IR atlas
+    ENDIF
+    CALL rttov_setup_emis_atlas(          &
+         errorstatus,              &
+         opts,                     &
+         imonth,                   &
+         atlas_type,               & ! Selects MW (1) or IR (2)
+         emis_atlas,               &
+         path = '/pf/b/b380333/work/Tools/RTTOV/rttov121/emis_data', & ! The default path to atlas data
+         coefs = coefs) 
+
+
+    IF (errorstatus /= errorstatus_success) THEN
+       WRITE(*,*) 'error initialising emissivity atlas'
+       CALL rttov_exit(errorstatus)
+    ENDIF
+
+    IF (opts % rt_ir % addsolar) THEN
+
+       ! Initialise the RTTOV BRDF atlas
+       CALL rttov_setup_brdf_atlas(        &
+            errorstatus,            &
+            opts,                   &
+            imonth,                 &
+            brdf_atlas,             &
+            path='/pf/b/b380333/work/Tools/RTTOV/rttov121/brdf_data', &  ! The default path to atlas data
+            coefs = coefs) ! If supplied the BRDF atlas is initialised for this sensor and
+       ! this makes the atlas much faster to access
+       IF (errorstatus /= errorstatus_success) THEN
+          WRITE(*,*) 'error initialising BRDF atlas'
+          CALL rttov_exit(errorstatus)
+       ENDIF
+
+    ENDIF
+
  
   END SUBROUTINE COSP_RTTOV_INIT
   ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

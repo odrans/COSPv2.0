@@ -188,7 +188,9 @@ contains
                    re_matrix(tp,pr,k)=Re
                 else
                    if (Np_matrix(tp,pr,k) > 0) then
+                      write(*,*) Np_matrix(tp,pr,k)
                       call errorMessage('WARNING(optics/quickbeam_optics.f90): Re and Np set for the same volume & hydrometeor type.  Np is being ignored.')
+                      stop
                    endif
                    Re = re_matrix(tp,pr,k)
                 endif

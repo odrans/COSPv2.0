@@ -162,6 +162,7 @@ program cosp_test_v2
                       rttov_Instrument,rttov_Nchannels,rttov_Channels,rttov_Surfem,      &
                       rttov_ZenAng,co2,ch4,n2o,co
 
+  
   ! Output namelist
   logical :: Lcfaddbze94,Ldbze94,Latb532,LcfadLidarsr532,Lclcalipso,Lclhcalipso,         &
              Lcllcalipso,Lclmcalipso,Lcltcalipso,LparasolRefl,Lclcalipsoliq,             &
@@ -266,7 +267,7 @@ program cosp_test_v2
   double precision :: time,time_bnds(2),time_step,half_time_step
   real(wp),dimension(:),allocatable :: mgrid_z,mgrid_zu,mgrid_zl
   !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    
   call cpu_time(driver_time(1))
   !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ! Read in namelists
@@ -377,7 +378,7 @@ program cosp_test_v2
        Lclhcalipsoice, Lclhcalipsoun, Lclmcalipsoliq, Lclmcalipsoice, Lclmcalipsoun,     &
        Lcllcalipsoliq, Lcllcalipsoice, Lcllcalipsoun, LcfadDbze94, Ldbze94, Lparasolrefl,&
        Ltbrttov, Npoints, Ncolumns, Nlevels, Nlvgrid_local, rttov_Nchannels, cospOUT)
-
+  
   !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ! Break COSP up into pieces and loop over each COSP 'chunk'.
   ! nChunks = # Points to Process (nPoints) / # Points per COSP iteration (nPoints_it)
@@ -385,6 +386,7 @@ program cosp_test_v2
   nChunks = nPoints/nPoints_it+1
   if (nPoints .eq. nPoints_it) nChunks = 1
   do iChunk=1,nChunks
+     write(*,*) ichunk, "/", nchunks
      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      ! Determine indices for "chunking" (again, if necessary)
      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -436,19 +438,26 @@ program cosp_test_v2
      cospstateIN%hgt_matrix_half(:,1:Nlevels) = zlev_half(start_idx:end_idx,Nlevels:1:-1) ! km
      cospstateIN%hgt_matrix_half(:,Nlevels+1) = 0._wp
      
-     ! RTTOV inputs (by default, COSP is distributed not using RTTOV, but the infrastructure is there.)
+     ! RTTOV inputs
      cospstateIN%u_sfc                = u_wind(start_idx:end_idx)            ! m/s
      cospstateIN%v_sfc                = v_wind(start_idx:end_idx)            ! m/s
-     !cospstateIN%emis_sfc             = rttov_surfem
-     !cospstateIN%zenang               = rttov_zenang
-     !cospstateIN%lat                  = lat(start_idx:end_idx)
-     !cospstateIN%lon                  = lon(start_idx:end_idx)
-     !cospstateIN%month                = 2 ! This is needed by RTTOV only for the surface emissivity calculation.
-     !cospstateIN%co2                  = co2*(amd/amCO2)*1e6
-     !cospstateIN%ch4                  = ch4*(amd/amCH4)*1e6  
-     !cospstateIN%n2o                  = n2o*(amd/amN2O)*1e6
-     !cospstateIN%co                   = co*(amd/amCO)*1e6
-     !cospstateIN%o3                   = mr_ozone(start_idx:end_idx,Nlevels:1:-1)*(amd/amO3)*1e6 ! microns
+     cospstateIN%cloudIce             = mr_lsice(start_idx:end_idx,Nlevels:1:-1) + &
+          fl_lssnow(start_idx:end_idx,Nlevels:1:-1) + fl_lsgrpl(start_idx:end_idx,Nlevels:1:-1)  ! kg/kg
+     cospstateIN%cloudLiq             = mr_lsliq(start_idx:end_idx,Nlevels:1:-1) + &
+          fl_lsrain(start_idx:end_idx,Nlevels:1:-1) ! kg/kg
+     cospstateIN%fl_rain              = fl_lsrain(start_idx:end_idx,Nlevels:1:-1)   ! kg/kg
+     cospstateIN%fl_snow              = fl_lssnow(start_idx:end_idx,Nlevels:1:-1)   ! kg/kg
+     cospstateIN%tca                  = tca(start_idx:end_idx,Nlevels:1:-1)
+     cospstateIN%emis_sfc             = rttov_surfem
+     cospstateIN%zenang               = rttov_zenang
+     cospstateIN%lat                  = lat(start_idx:end_idx)
+     cospstateIN%lon                  = lon(start_idx:end_idx)
+     cospstateIN%month                = 2 ! This is needed by RTTOV only for the surface emissivity calculation.
+     cospstateIN%co2                  = co2*(amd/amCO2)*1e6
+     cospstateIN%ch4                  = ch4*(amd/amCH4)*1e6  
+     cospstateIN%n2o                  = n2o*(amd/amN2O)*1e6
+     cospstateIN%co                   = co*(amd/amCO)*1e6
+     cospstateIN%o3                   = mr_ozone(start_idx:end_idx,Nlevels:1:-1)*(amd/amO3)*1e6 ! microns
      
      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      ! Generate subcolumns and compute optical inputs.
@@ -471,6 +480,9 @@ program cosp_test_v2
      ! Call COSP
      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      cosp_status = COSP_SIMULATOR(cospIN, cospstateIN, cospOUT,start_idx,end_idx,.false.)
+
+     ! write(*,*) start_idx, end_idx
+     ! write(*,*) cospOUT%rttov_tbs(:,1)
      
      call cpu_time(driver_time(7))
   enddo
@@ -795,6 +807,7 @@ contains
        mr_hydro(:,1,:,I_LSSNOW) = fl_lssnowIN
        mr_hydro(:,1,:,I_LSGRPL) = fl_lsgrplIN
        Reff(:,1,:,:)            = ReffIN
+       Np(:,1,:,:) = 0._wp
     endif
     
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
