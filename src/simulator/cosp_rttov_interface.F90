@@ -153,8 +153,8 @@ CONTAINS
        write(sat,*) satelliteIN
        sat="_"//trim(adjustl(sat))//"_"
     END IF
-    COEF_FILENAME= "/pf/b/b380333/work/Tools/RTTOV/rttov121/rtcoef_rttov12/rttov7pred54L/rtcoef_"//trim(platform_name(platformIN))//trim(sat)//trim(inst_name(instrumentIN))//".dat"
-    CLD_COEF_FILENAME= "/pf/b/b380333/work/Tools/RTTOV/rttov121/rtcoef_rttov12/cldaer_ir/sccldcoef_"//trim(platform_name(platformIN))//trim(sat)//trim(inst_name(instrumentIN))//".dat"    
+    COEF_FILENAME= "/pf/b/b380333/work/Tools/RTTOV/rttov121/rtcoef_rttov12/rttov9pred54L/rtcoef_"//trim(platform_name(platformIN))//trim(sat)//trim(inst_name(instrumentIN))//".dat"
+    CLD_COEF_FILENAME= "/pf/b/b380333/work/Tools/RTTOV/rttov121/rtcoef_rttov12/cldaer_visir/sccldcoef_"//trim(platform_name(platformIN))//trim(sat)//trim(inst_name(instrumentIN))//".dat"    
 
     
     ! --------------------------------------------------------------------------

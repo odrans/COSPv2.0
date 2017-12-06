@@ -525,7 +525,7 @@ program cosp_test_v2
   mgrid_zl = zlev_half(1,:)
   mgrid_zu(1:Nlevels-1) = zlev_half(1,2:Nlevels)
   mgrid_zu(Nlevels)     = zlev(1,Nlevels) + (zlev(1,Nlevels) - mgrid_zl(Nlevels))
-  
+
   if (geomode .eq. 1) then
      call nc_cmor_init('../cmor/cosp_cmor_nl_1D.txt','replace',nPoints,nColumns,nLevels, &
                        rttov_nChannels,nLvgrid_local,lon,lat,mgrid_zl,mgrid_zu,mgrid_z,cospOUT,&
@@ -534,11 +534,13 @@ program cosp_test_v2
                        latvar_id,column_axid,sza_axid,temp_axid,channel_axid,dbze_axid,  &
                        sratio_axid,MISR_CTH_axid,tau_axid,pressure2_axid,v1d(1:N1D+1),   &
                        v2d,v3d)
+
      call nc_cmor_associate_1d(grid_id,height_axid,height_mlev_axid,                     &
                                column_axid,sza_axid,temp_axid,channel_axid,dbze_axid,    &
                                sratio_axid,MISR_CTH_axid,tau_axid,pressure2_axid,        &
                                nPoints,nColumns,nLevels,rttov_nChannels,nLvgrid_local,   &
                                cospOUT,N1D+1,N2D,N3D,v1d,v2d,v3d)
+
      call nc_cmor_write_1d(nPoints,lon,lat,time_bnds,lonvar_id,latvar_id,N1D+1,N2D,N3D,  &
                            v1d(1:N1D+1),v2d,v3d)
   endif
@@ -681,7 +683,7 @@ contains
        do k=1,nColumns
           ! Subcolumn cloud fraction
           column_frac_out = cospIN%frac_out(:,k,:)
-               
+
           ! LS clouds
           where (column_frac_out == I_LSC)
              mr_hydro(:,k,:,I_LSCLIQ) = mr_lsliq
@@ -797,7 +799,10 @@ contains
     else
        cospIN%frac_out(:,:,:) = 1  
        allocate(mr_hydro(nPoints,1,nLevels,nHydro),Reff(nPoints,1,nLevels,nHydro),       &
-                Np(nPoints,1,nLevels,nHydro))
+            Np(nPoints,1,nLevels,nHydro))
+       mr_hydro(:,:,:,:) = 0._wp
+       Reff(:,:,:,:) = 0._wp
+       
        mr_hydro(:,1,:,I_LSCLIQ) = mr_lsliq
        mr_hydro(:,1,:,I_LSCICE) = mr_lsice
        mr_hydro(:,1,:,I_CVCLIQ) = mr_ccliq
@@ -809,6 +814,7 @@ contains
        Reff(:,1,:,:)            = ReffIN
        Np(:,1,:,:) = 0._wp
     endif
+
     
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ! 11 micron emissivity

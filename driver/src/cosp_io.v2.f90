@@ -299,6 +299,7 @@ contains
        call cosp_error(routine_name,errmsg,errcode=errst)
     endif
     errst = nf90_get_var(ncid, vid, lon, start = (/1/), count = (/Nlon/))
+    lon=lon+180
     if (errst /= 0) then
        errmsg="Error in nf90_get_var, var: lon"
        call cosp_error(routine_name,errmsg,errcode=errst)
@@ -1035,7 +1036,7 @@ contains
          institute_id=trim(institute_id),parent_experiment_rip=trim(parent_experiment_rip), &
          initialization_method=initialization_method,physics_version=physics_version)
     error_flag = cmor_set_cur_dataset_attribute('cosp_version',trim(COSP_VERSION))
-    
+
     !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     ! Define axis
     !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1088,7 +1089,7 @@ contains
           stop
        endif
     endif
-    
+
     !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     ! Associate table of variables. Needed here to fill in the table with names.
     !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1098,7 +1099,7 @@ contains
                                  sratio_axid,MISR_CTH_axid,tau_axid,pressure2_axid,     &
                                  nPoints,nColumns,nLevels,nChannels,nLvgrid,            &
                                  cospOUT,N1,N2,N3,v1d,v2d,v3d)
-
+       
 
     else
        call nc_cmor_associate_2d(lon_axid,lat_axid,time_axid,height_axid,               &

@@ -497,7 +497,8 @@ CONTAINS
                          Llidar_only_freq_cloud,cospOUT,cosp_simulator,nError)
     call cpu_time(cosp_time(3))
 
-    if(cospOUT%rttov_tbs(1,1).LT.0) stop
+    !if(cospOUT%rttov_tbs(1,1).LT.0) stop %% MODIFIED!!
+
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ! 3) Populate instrument simulator inputs
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
